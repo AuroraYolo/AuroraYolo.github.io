@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://codingheping.github.io</id>
     <title>Gridea</title>
-    <updated>2020-11-04T09:30:40.041Z</updated>
+    <updated>2020-11-04T09:34:15.452Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://codingheping.github.io"/>
     <link rel="self" href="https://codingheping.github.io/atom.xml"/>
@@ -10,6 +10,29 @@
     <logo>https://codingheping.github.io/images/avatar.png</logo>
     <icon>https://codingheping.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[利用redis存储websocket或tcp的fd功能和聊天室内的fd]]></title>
+        <id>https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/</id>
+        <link href="https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/">
+        </link>
+        <updated>2020-11-04T09:33:47.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="利用redis存储websocket或tcp的fd功能和聊天室内的fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</h1>
+<p>Last Edited By: he peter<br>
+修改时间: Nov 4, 2020 5:31 PM<br>
+创建人: he peter<br>
+标签: websocket<br>
+项目创建时间: Oct 21, 2020 10:08 AM</p>
+<h1 id="利用redis的hash类型存储fd">利用redis的hash类型存储fd</h1>
+<pre><code class="language-php">$redis = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
+//bind key to fd
+$redis-&gt;hSet(self::HASH_KEY_TO_FD_PREFIX, $key, $fd);
+</code></pre>
+<h1 id="利用set无序集合存储聊天室内的fd">利用set无序集合存储聊天室内的fd</h1>
+<pre><code class="language-php">//add fd to room
+$redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Hello Gridea]]></title>
         <id>https://codingheping.github.io/post/hello-gridea/</id>
