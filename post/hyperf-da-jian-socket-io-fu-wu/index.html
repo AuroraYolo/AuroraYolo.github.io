@@ -1,22 +1,104 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://codingheping.github.io</id>
-    <title>codingheping</title>
-    <updated>2020-11-04T15:38:27.727Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://codingheping.github.io"/>
-    <link rel="self" href="https://codingheping.github.io/atom.xml"/>
-    <subtitle>温故而知新</subtitle>
-    <logo>https://codingheping.github.io/images/avatar.png</logo>
-    <icon>https://codingheping.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2020, codingheping</rights>
-    <entry>
-        <title type="html"><![CDATA[Hyperf搭建socket-io服务]]></title>
-        <id>https://codingheping.github.io/post/hyperf-da-jian-socket-io-fu-wu/</id>
-        <link href="https://codingheping.github.io/post/hyperf-da-jian-socket-io-fu-wu/">
-        </link>
-        <updated>2020-11-04T15:37:22.000Z</updated>
-        <content type="html"><![CDATA[<p>Last Edited By: he peter<br>
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hyperf搭建socket-io服务 | codingheping</title>
+<link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604504303690">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Hyperf搭建socket-io服务 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="Last Edited By: he peter
+修改时间: Nov 4, 2020 11:35 PM
+创建人: he peter
+标签: Hyperf
+项目创建时间: Nov 4, 2020 11:23 PM
+背景
+自己一直想做一个分布式..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://codingheping.github.io">
+  <img class="avatar" src="https://codingheping.github.io/images/avatar.png?v=1604504303690" alt="">
+  </a>
+  <h1 class="site-title">
+    codingheping
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/codingheping" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Hyperf搭建socket-io服务
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-11-04
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>Last Edited By: he peter<br>
 修改时间: Nov 4, 2020 11:35 PM<br>
 创建人: he peter<br>
 标签: Hyperf<br>
@@ -279,29 +361,95 @@ class SocketIO extends \Hyperf\SocketIOServer\SocketIO
 }
 
 </code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[利用redis存储websocket或tcp的fd功能和聊天室内的fd]]></title>
-        <id>https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/</id>
-        <link href="https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/">
-        </link>
-        <updated>2020-11-04T09:33:47.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="利用redis存储websocket或tcp的fd功能和聊天室内的fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</h1>
-<p>Last Edited By: he peter<br>
-修改时间: Nov 4, 2020 5:31 PM<br>
-创建人: he peter<br>
-标签: websocket<br>
-项目创建时间: Oct 21, 2020 10:08 AM</p>
-<h1 id="利用redis的hash类型存储fd">利用redis的hash类型存储fd</h1>
-<pre><code class="language-php">$redis = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
-//bind key to fd
-$redis-&gt;hSet(self::HASH_KEY_TO_FD_PREFIX, $key, $fd);
-</code></pre>
-<h1 id="利用set无序集合存储聊天室内的fd">利用set无序集合存储聊天室内的fd</h1>
-<pre><code class="language-php">//add fd to room
-$redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
-</code></pre>
-]]></content>
-    </entry>
-</feed>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a>
+<ul>
+<li><a href="#1%E5%AE%89%E8%A3%85socket-io">1.安装socket-io</a></li>
+</ul>
+</li>
+<li><a href="#2%E9%85%8D%E7%BD%AEserver">2.配置server</a>
+<ul>
+<li><a href="#3%E6%90%AD%E5%BB%BA%E6%9C%8D%E5%8A%A1%E7%AB%AF">3.搭建服务端</a></li>
+</ul>
+</li>
+<li><a href="#4%E9%85%8D%E7%BD%AE%E6%88%BF%E9%97%B4%E9%80%82%E9%85%8D%E5%99%A8%E5%88%A9%E7%94%A8redisnsqadapter%E5%A4%84%E7%90%86%E5%88%86%E5%B8%83%E5%BC%8F">4.配置房间适配器,利用RedisNsqAdapter处理分布式</a></li>
+<li><a href="#5%E9%87%8D%E5%86%99socket-io%E4%B8%BB%E8%A6%81%E7%94%A8%E4%BA%8E%E7%94%A8%E6%88%B7%E4%B8%8A%E7%BA%BF%E9%80%9A%E7%9F%A5%E4%B8%8B%E7%BA%BF%E9%80%9A%E7%9F%A5">5.重写socket-io(主要用于用户上线通知,下线通知)</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/">
+              <h3 class="post-title">
+                利用redis存储websocket或tcp的fd功能和聊天室内的fd
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://codingheping.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
