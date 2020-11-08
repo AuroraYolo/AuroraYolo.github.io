@@ -2,22 +2,23 @@
   <head>
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>利用redis存储websocket或tcp的fd功能和聊天室内的fd | codingheping</title>
+<title>vue.socket-io连接hyperf.socket-io服务 | codingheping</title>
 <link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604849588533">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="利用redis存储websocket或tcp的fd功能和聊天室内的fd | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="alternate" type="application/atom+xml" title="vue.socket-io连接hyperf.socket-io服务 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
-    <meta name="description" content="利用redis存储websocket或tcp的fd功能和聊天室内的fd
+    <meta name="description" content="
 Last Edited By: he peter
-修改时间: Nov 4, 2020 5:31 PM
+修改时间: Nov 8, 2020 11:25 PM
 创建人: he peter
-标签: websocket
-项目创建时..." />
-    <meta name="keywords" content="PHP,Swoole,Redis" />
+标签: sokcet.io,hyperf
+项目创建时间: Nov 8, 2020 11:16 PM
+1.m..." />
+    <meta name="keywords" content="" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
@@ -83,56 +84,112 @@ Last Edited By: he peter
         <div class="post-detail">
           <article class="post">
             <h2 class="post-title">
-              利用redis存储websocket或tcp的fd功能和聊天室内的fd
+              vue.socket-io连接hyperf.socket-io服务
             </h2>
             <div class="post-info">
               <span>
-                2020-11-04
+                2020-11-08
               </span>
               <span>
-                1 min read
+                2 min read
               </span>
-              
-                <a href="https://codingheping.github.io/tag/I4dlHNn_x/" class="post-tag">
-                  # PHP
-                </a>
-              
-                <a href="https://codingheping.github.io/tag/SXQfjl6af/" class="post-tag">
-                  # Swoole
-                </a>
-              
-                <a href="https://codingheping.github.io/tag/DlyxjMIbO/" class="post-tag">
-                  # Redis
-                </a>
               
             </div>
             
-              <img class="post-feature-image" src="https://codingheping.github.io/post-images/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd.jpg" alt="">
+              <img class="post-feature-image" src="https://codingheping.github.io/post-images/vuesocket-io-lian-jie-hyperfsocket-io-fu-wu.jpg" alt="">
             
             <div class="post-content-wrapper">
               <div class="post-content">
-                <h1 id="利用redis存储websocket或tcp的fd功能和聊天室内的fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</h1>
+                <figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604849329083.jpg" alt="" loading="lazy"></figure>
 <p>Last Edited By: he peter<br>
-修改时间: Nov 4, 2020 5:31 PM<br>
+修改时间: Nov 8, 2020 11:25 PM<br>
 创建人: he peter<br>
-标签: websocket<br>
-项目创建时间: Oct 21, 2020 10:08 AM</p>
-<h1 id="利用redis的hash类型存储fd">利用redis的hash类型存储fd</h1>
-<pre><code class="language-php">$redis = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
-//bind key to fd
-$redis-&gt;hSet(self::HASH_KEY_TO_FD_PREFIX, $key, $fd);
+标签: sokcet.io,hyperf<br>
+项目创建时间: Nov 8, 2020 11:16 PM</p>
+<h2 id="1mainjs引入socket-io相关文件">1.main.js引入socket-io相关文件</h2>
+<pre><code class="language-jsx">import VueSocketIO from 'vue-socket.io';
+
+import SocketIO from 'socket.io-client';
 </code></pre>
-<h1 id="利用set无序集合存储聊天室内的fd">利用set无序集合存储聊天室内的fd</h1>
-<pre><code class="language-php">//add fd to room
-$redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
+<h2 id="2初始化socket-io">2.初始化socket-io</h2>
+<pre><code class="language-jsx">const token = `${getToken()}`
+
+const socketInstance = SocketIO(process.env.WEB_SOCKET_URL, {
+  transports: ['websocket','polling'],
+  transportOptions: {
+    polling: {
+      extraHeaders: {
+        Authorization: token
+      }
+    }
+  },
+  query:{
+    token:token
+  }
+});
+
+this.socket = new VueSocketIO({
+  debug: true,
+  connection: socketInstance
+})
+// Websocket 连接成功回调方法
+this.socket.io.on('connect', () =&gt; {
+  store.commit('UPDATE_SOCKET_STATUS', true);
+})
+// Websocket 断开连接回调方法
+this.socket.io.on('disconnect', () =&gt; {
+  store.commit('UPDATE_SOCKET_STATUS', false);
+})
+// Websocket 断开连接回调方法
+this.socket.io.on('reconnect', () =&gt; {
+  store.commit('UPDATE_SOCKET_STATUS', true);
+})
+Vue.use(this.socket)
+</code></pre>
+<h2 id="3组件中使用">3.组件中使用</h2>
+<pre><code class="language-jsx">sockets: {
+  // 三个默认方法
+  // 链接成功
+  connect () {
+    console.log('socket connected')
+  },
+  // 链接失败
+  disconnect () {
+    console.log('socket disconnect')
+  },
+  // 重新连接
+  reconnect () {
+    console.log('socket reconnect')
+  },
+  // 第二种：监听、接收消息方法
+  event (data) {
+    console.log(data, 'TEAM_NOTICE，推送的消息')
+  }
+},
+</code></pre>
+<h2 id="4发送socket-io消息">4.发送socket-io消息</h2>
+<pre><code class="language-jsx">mounted() {
+  this.scrollEvent();
+  // 第一种：监听，接收消息
+  this.$socket.emit('event', {
+    projectId: '88',
+    theme: 'getUserInfo',
+    time: 10000,
+  });
+},
 </code></pre>
 
               </div>
               <div class="toc-container">
                 <ul class="markdownIt-TOC">
-<li><a href="#%E5%88%A9%E7%94%A8redis%E5%AD%98%E5%82%A8websocket%E6%88%96tcp%E7%9A%84fd%E5%8A%9F%E8%83%BD%E5%92%8C%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%86%85%E7%9A%84fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</a></li>
-<li><a href="#%E5%88%A9%E7%94%A8redis%E7%9A%84hash%E7%B1%BB%E5%9E%8B%E5%AD%98%E5%82%A8fd">利用redis的hash类型存储fd</a></li>
-<li><a href="#%E5%88%A9%E7%94%A8set%E6%97%A0%E5%BA%8F%E9%9B%86%E5%90%88%E5%AD%98%E5%82%A8%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%86%85%E7%9A%84fd">利用set无序集合存储聊天室内的fd</a></li>
+<li>
+<ul>
+<li><a href="#1mainjs%E5%BC%95%E5%85%A5socket-io%E7%9B%B8%E5%85%B3%E6%96%87%E4%BB%B6">1.main.js引入socket-io相关文件</a></li>
+<li><a href="#2%E5%88%9D%E5%A7%8B%E5%8C%96socket-io">2.初始化socket-io</a></li>
+<li><a href="#3%E7%BB%84%E4%BB%B6%E4%B8%AD%E4%BD%BF%E7%94%A8">3.组件中使用</a></li>
+<li><a href="#4%E5%8F%91%E9%80%81socket-io%E6%B6%88%E6%81%AF">4.发送socket-io消息</a></li>
+</ul>
+</li>
 </ul>
 
               </div>
@@ -140,6 +197,15 @@ $redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
           </article>
         </div>
 
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://codingheping.github.io/post/hyperf-da-jian-socket-io-fu-wu/">
+              <h3 class="post-title">
+                Hyperf搭建socket-io服务
+              </h3>
+            </a>
+          </div>
         
 
         
