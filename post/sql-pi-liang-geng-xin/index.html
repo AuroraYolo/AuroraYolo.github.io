@@ -2,22 +2,20 @@
   <head>
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>利用redis存储websocket或tcp的fd功能和聊天室内的fd | codingheping</title>
+<title>SQL批量更新 | codingheping</title>
 <link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604999723940">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="利用redis存储websocket或tcp的fd功能和聊天室内的fd | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="alternate" type="application/atom+xml" title="SQL批量更新 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
-    <meta name="description" content="利用redis存储websocket或tcp的fd功能和聊天室内的fd
-Last Edited By: he peter
-修改时间: Nov 4, 2020 5:31 PM
-创建人: he peter
-标签: websocket
-项目创建时..." />
-    <meta name="keywords" content="PHP,Swoole,Redis" />
+    <meta name="description" content="一般的SQL更新语句:
+UPDATE mytable SET myfield = 'value' WHERE other_field = 'other_value';
+如果更新同一字段为同一个值
+UPDATE mytable set myf..." />
+    <meta name="keywords" content="Mysql" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
@@ -83,56 +81,55 @@ Last Edited By: he peter
         <div class="post-detail">
           <article class="post">
             <h2 class="post-title">
-              利用redis存储websocket或tcp的fd功能和聊天室内的fd
+              SQL批量更新
             </h2>
             <div class="post-info">
               <span>
-                2020-11-04
+                2020-11-10
               </span>
               <span>
                 1 min read
               </span>
               
-                <a href="https://codingheping.github.io/tag/I4dlHNn_x/" class="post-tag">
-                  # PHP
-                </a>
-              
-                <a href="https://codingheping.github.io/tag/SXQfjl6af/" class="post-tag">
-                  # Swoole
-                </a>
-              
-                <a href="https://codingheping.github.io/tag/DlyxjMIbO/" class="post-tag">
-                  # Redis
+                <a href="https://codingheping.github.io/tag/KeeNu9X4Q/" class="post-tag">
+                  # Mysql
                 </a>
               
             </div>
             
-              <img class="post-feature-image" src="https://codingheping.github.io/post-images/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd.jpg" alt="">
-            
             <div class="post-content-wrapper">
               <div class="post-content">
-                <h1 id="利用redis存储websocket或tcp的fd功能和聊天室内的fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</h1>
-<p>Last Edited By: he peter<br>
-修改时间: Nov 4, 2020 5:31 PM<br>
-创建人: he peter<br>
-标签: websocket<br>
-项目创建时间: Oct 21, 2020 10:08 AM</p>
-<h1 id="利用redis的hash类型存储fd">利用redis的hash类型存储fd</h1>
-<pre><code class="language-php">$redis = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
-//bind key to fd
-$redis-&gt;hSet(self::HASH_KEY_TO_FD_PREFIX, $key, $fd);
-</code></pre>
-<h1 id="利用set无序集合存储聊天室内的fd">利用set无序集合存储聊天室内的fd</h1>
-<pre><code class="language-php">//add fd to room
-$redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
-</code></pre>
+                <h2 id="一般的sql更新语句">一般的SQL更新语句:</h2>
+<p>UPDATE mytable SET myfield = 'value' WHERE other_field = 'other_value';</p>
+<h2 id="如果更新同一字段为同一个值">如果更新同一字段为同一个值</h2>
+<p>UPDATE mytable set myfield ='value' WHERE other_field IN('other_values');</p>
+<h2 id="批量更新方案">批量更新方案</h2>
+<p>CASE WHEN<br>
+UPDATE mytable SET<br>
+myfield = CASE id<br>
+WHEN 1 THEN 'value'<br>
+WHEN 2 THEN 'value'<br>
+WHEN 3 THEN 'value'<br>
+END,<br>
+myfield1 = CASE id<br>
+WHEN 1 THEN 'value1'<br>
+WHEN 2 THEN 'value2'<br>
+WHEN 3 THEN 'value3'<br>
+END<br>
+WHERE id IN (1,2,3)<br>
+SQL的意思是更新myfield字段当id为1的时候值为value......,更新myfield1字段当id为1的时候<br>
+值为'value1'....</p>
 
               </div>
               <div class="toc-container">
                 <ul class="markdownIt-TOC">
-<li><a href="#%E5%88%A9%E7%94%A8redis%E5%AD%98%E5%82%A8websocket%E6%88%96tcp%E7%9A%84fd%E5%8A%9F%E8%83%BD%E5%92%8C%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%86%85%E7%9A%84fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</a></li>
-<li><a href="#%E5%88%A9%E7%94%A8redis%E7%9A%84hash%E7%B1%BB%E5%9E%8B%E5%AD%98%E5%82%A8fd">利用redis的hash类型存储fd</a></li>
-<li><a href="#%E5%88%A9%E7%94%A8set%E6%97%A0%E5%BA%8F%E9%9B%86%E5%90%88%E5%AD%98%E5%82%A8%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%86%85%E7%9A%84fd">利用set无序集合存储聊天室内的fd</a></li>
+<li>
+<ul>
+<li><a href="#%E4%B8%80%E8%88%AC%E7%9A%84sql%E6%9B%B4%E6%96%B0%E8%AF%AD%E5%8F%A5">一般的SQL更新语句:</a></li>
+<li><a href="#%E5%A6%82%E6%9E%9C%E6%9B%B4%E6%96%B0%E5%90%8C%E4%B8%80%E5%AD%97%E6%AE%B5%E4%B8%BA%E5%90%8C%E4%B8%80%E4%B8%AA%E5%80%BC">如果更新同一字段为同一个值</a></li>
+<li><a href="#%E6%89%B9%E9%87%8F%E6%9B%B4%E6%96%B0%E6%96%B9%E6%A1%88">批量更新方案</a></li>
+</ul>
+</li>
 </ul>
 
               </div>
@@ -140,6 +137,15 @@ $redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
           </article>
         </div>
 
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://codingheping.github.io/post/mysql-cha-xun-zhi-xing-liu-cheng/">
+              <h3 class="post-title">
+                Mysql查询执行流程
+              </h3>
+            </a>
+          </div>
         
 
         

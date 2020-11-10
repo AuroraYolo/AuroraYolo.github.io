@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://codingheping.github.io</id>
     <title>codingheping</title>
-    <updated>2020-11-10T09:10:13.397Z</updated>
+    <updated>2020-11-10T09:15:26.899Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://codingheping.github.io"/>
     <link rel="self" href="https://codingheping.github.io/atom.xml"/>
@@ -10,6 +10,188 @@
     <logo>https://codingheping.github.io/images/avatar.png</logo>
     <icon>https://codingheping.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, codingheping</rights>
+    <entry>
+        <title type="html"><![CDATA[锁]]></title>
+        <id>https://codingheping.github.io/post/suo/</id>
+        <link href="https://codingheping.github.io/post/suo/">
+        </link>
+        <updated>2020-11-10T09:15:08.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="全局锁">全局锁</h2>
+<p>全局锁是对整个数据库实例枷锁.MySQL提供了一个加全局读锁的方法,命令是Flush tables with read lock(FTWRL).当你需要让整个库处于只读状态的时候,可以使用这个命令,<br>
+之后其他线程的以下语句会被阻塞:数据更新语句(数据的增删改)、数据定义语句(建表、修改表结构等)和更新类事务的提交语句.</p>
+<p>全局锁的典型使用场景是,做全库逻辑备份.</p>
+<h2 id="表级锁">表级锁</h2>
+<p>MySQL里面表级别的锁有两种:一种是表锁,一种是元数据锁.(meta data lock)<br>
+表锁的语法是lock tables ...read/write.可以用unlock tables主动释放锁.举个例子,如果某个线程A中执行lock tables t1 read,t2 write;这个语句,则其他线程写t1、读写t2的语句<br>
+都会被阻塞.同时,线程A在执行unlock tables之前,也只能执行读t1、读写t2的操作.练写t1都不允许,自然也不能访问其他表.</p>
+<p>另一类表级的锁是MDL(metadata lock).MDL不需要显式使用,在访问一个表的时候会被自动加上.MDL的作用是,保证读写的正确性.<br>
+读锁之间不互斥,可以有多个线程同时对一张表增删改查.<br>
+读写锁之间、写锁之间是互斥的,用来保证变更表结构操作的安全性.因此,如果有两个线程要同时给一个表加字段,其中一个要等另一个执行完才能执行.</p>
+<h2 id="行锁">行锁</h2>
+<p>行锁是针对数据表中行记录的锁.比如事务A更新了一行,而这时候事务B也要更新同一行,则必须等事务A的操作完成后才能进行更新.</p>
+<p>在InnoDB事务中,行锁是在需要的时候才加上的,但并不是不需要了就立刻释放,而是要等到事务结束时才释放.这个就是两阶段锁协议。<br>
+如果事务中需要锁多个行,要把最可能造成锁冲突、最可能影响并发度的锁尽量往后放.</p>
+<h2 id="死锁和死锁检测">死锁和死锁检测</h2>
+<p>当并发系统中不同线程出现循环资源依赖,涉及的线程都在等待别的线程释放资源时,就会导致这几个线程都进入无线等待的状态,称为死锁.<br>
+用数据库中的行锁举个例子:<br>
+<img src="https://static001.geekbang.org/resource/image/4d/52/4d0eeec7b136371b79248a0aed005a52.jpg" alt="avatar" loading="lazy"><br>
+这时候,事务A在等待事务B释放id=2的行锁,而事务B在等待事务A释放id=1的行锁.事务A和事务B在互相等待对方的资源释放,就是进入了死锁状态.<br>
+当出现死锁以后,有两种策略:<br>
+1.直接进入等待,直到超时.这个超时时间可以通过参数innodb_lock_wait_timeout来设置.<br>
+2.发起死锁检测,发现死锁后,主动回滚死锁链条中的某一个事务,让其他事务得已继续执行.将参数innodb_deadlock_detect设置为on,表示开启这个逻辑.</p>
+<p>在InnoDB中,innodb_lock_wait_timeout的默认值是50s,意味着如果采用第一个策略,当出现死锁以后,第一个被锁住的线程要过50s才会超时退出,然后其他线程才有可能继续<br>
+执行.这个等待时间是无法接受的.所以一般还是采用主动死锁检测.</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[聚簇索引和非聚簇索引]]></title>
+        <id>https://codingheping.github.io/post/ju-cu-suo-yin-he-fei-ju-cu-suo-yin/</id>
+        <link href="https://codingheping.github.io/post/ju-cu-suo-yin-he-fei-ju-cu-suo-yin/">
+        </link>
+        <updated>2020-11-10T09:14:12.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="聚簇索引">聚簇索引</h2>
+<p>表数据和主键存在一起的，主键索引的叶节点存储行数据(包括主键),<br>
+二级索引的叶节点存储行的主键值.使用的是B+树作为索引的存储结构,非叶子节点都是索引关键字，但非叶子节点中的关键字中不存储对应记录的具体内容或内容地址。叶子节点上的数据是主键与具体记录(数据内容)。</p>
+<h2 id="非聚簇索引">非聚簇索引</h2>
+<p>表数据和索引是分成两部分存储的，主键索引和二级索引存储上没有任何区别。使用的是B+树作为索引的存储结构，所有的节点都是索引，叶子节点存储的是索引+索引对应的记录的数据</p>
+<h2 id="聚簇索引的优点">聚簇索引的优点</h2>
+<p>1.当你需要取出一定范围内的数据时，用聚簇索引也比用非聚簇索引好。</p>
+<p>2.当通过聚簇索引查找目标数据时理论上比非聚簇索引要快，因为非聚簇索引定位到对应主键时还要多一次目标记录寻址,即多一次I/O。</p>
+<p>3.使用覆盖索引扫描的查询可以直接使用页节点中的主键值</p>
+<h2 id="聚簇索引的缺点">聚簇索引的缺点</h2>
+<p>1.插入速度严重依赖于插入顺序，按照主键的顺序插入是最快的方式，否则将会出现页分裂，严重影响性能。因此，对于InnoDB表，我们一般都会定义一个自增的ID列为主键。</p>
+<p>2.更新主键的代价很高，因为将会导致被更新的行移动。因此，对于InnoDB表，我们一般定义主键为不可更新。</p>
+<p>3.二级索引访问需要两次索引查找，第一次找到主键值，第二次根据主键值找到行数据。二级索引的叶节点存储的是主键值，而不是行指针（非聚簇索引存储的是指针或者说是地址），这是为了减少当出现行移动或数据页分裂时二级索引的维护工作，但会让二级索引占用更多的空间。</p>
+<p>4.采用聚簇索引插入新值比采用非聚簇索引插入新值的速度要慢很多，因为插入要保证主键不能重复，判断主键不能重复，采用的方式在不同的索引下面会有很大的性能差距，聚簇索引遍历所有的叶子节点，非聚簇索引也判断所有的叶子节点，但是聚簇索引的叶子节点除了带有主键还有记录值，记录的大小往往比主键要大的多。这样就会导致聚簇索引在判定新记录携带的主键是否重复时进行昂贵的I/O代价</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[索引]]></title>
+        <id>https://codingheping.github.io/post/suo-yin/</id>
+        <link href="https://codingheping.github.io/post/suo-yin/">
+        </link>
+        <updated>2020-11-10T09:13:38.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="索引常见的模型">索引常见的模型</h2>
+<p>数据结构:哈希表、有序数组、和搜索树.<br>
+哈希表适用于等值查询的场景.(应用场景:存储身份证信息和姓名的表)<br>
+有序数组适用于等值查询和范围查询.<br>
+二叉搜索树:每个节点左儿子小于父节点,右儿子大于父节点.<br>
+InnoDB引擎索引模型是:B+Tree</p>
+<h2 id="索引类型">索引类型</h2>
+<p>主键索引 非主键索引</p>
+<p>主键索引的叶子节点存的是整行的数据(聚簇索引),非主键索引的叶子节点存的的是主键的值(二级索引)</p>
+<p>主键索引和普通索引的区别:主键索引只要搜索ID这个B+Tree即可拿到数据.普通索引先搜索索引拿到主键值,再到<br>
+主键索引数搜索一次(回表)</p>
+<h2 id="为何选择自增主键">为何选择自增主键</h2>
+<p>从性能和存储空间方面考量,自增主键往往是更合理的选择.</p>
+<p>主键长度越小，普通索引的叶子节点就越小，普通索引占用的空间也就越小.</p>
+<p>一个数据页满了,安装B+Tree算法,新增加一个数据页,叫做页分裂,会导致性能下架.空间利用率降低大概50%.当相邻<br>
+的两个数据页利用率很低的时候会做数据页合并,合并的过程是分裂过程的逆过程.</p>
+<pre><code>select * from T where k between 3 and 5;
+表结构:
+mysql&gt; create table T (
+ID int primary key,
+k int NOT NULL DEFAULT 0, 
+s varchar(16) NOT NULL DEFAULT '',
+index k(k))
+engine=InnoDB;
+
+insert into T values(100,1, 'aa'),(200,2,'bb'),(300,3,'cc'),(500,5,'ee'),(600,6,'ff'),(700,7,'gg');
+![avatar](https://static001.geekbang.org/resource/image/dc/8d/dcda101051f28502bd5c4402b292e38d.png)
+SQL查询流程:
+1.在k索引树上找到k=3的记录,取得ID=300;
+2.再到ID索引数查到ID=300对应的R3;
+3.在k索引树上取下一个值k=5,取得ID=500,
+4.再回到ID索引数查到ID=500对应的R4;
+5.在k索引数去下一个值k=6,不满足条件,循环结束.
+</code></pre>
+<h2 id="回表">回表</h2>
+<p>回到主键索引数搜索的过程,称之为回表.</p>
+<h2 id="覆盖索引">覆盖索引</h2>
+<p>如果执行的语句是select ID from T where k between 3 and 5,这时只需要查ID的值,ID的值已经在k索引树上,可以直接提供查询结果,<br>
+不需要回表.索引k已经'覆盖了'查询需求,称之为覆盖索引</p>
+<p><em><strong>覆盖索引可以减少树的搜索次数,显著提升查询性能,所有使用覆盖索引时一个常用的优化手段.</strong></em></p>
+<h2 id="最左前缀原则">最左前缀原则</h2>
+<p>B+数索引结构,可以利用索引的'最左前缀',来定位记录<br>
+比如(name,age)联合索引,只要满足最左前缀,就可以利用索引来加速检索.这个最左前缀可以是联合索引的最左N个字段,也可以是字符串索引的最左M个字符.</p>
+<h2 id="索引下推">索引下推</h2>
+<p>MySQL5.6以后引入了索引下推优化,在索引遍历过程中,对索引中包含的字段先做判断,直接过滤掉不满足条件的记录,减少回表次数.</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[事务隔离]]></title>
+        <id>https://codingheping.github.io/post/shi-wu-ge-chi/</id>
+        <link href="https://codingheping.github.io/post/shi-wu-ge-chi/">
+        </link>
+        <updated>2020-11-10T09:12:25.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="事务">事务</h2>
+<p>事务就是保证一组数据库操作,要么全部成功,要么全部失败.MySQL原生的MyISAM引擎不支持事务.<br>
+特性:ACID(原子性、一致性、隔离性、持久性)</p>
+<h2 id="隔离性与隔离级别">隔离性与隔离级别</h2>
+<p>当数据库上有多个事务同时执行的时候,就可能出现脏读(dirty read)、不可重复读(non-repeatable read)、幻读(phantom read)的问题.<br>
+SQL标准的事务隔离级别包括:读未提交(read uncommitted)、读提交(read committed)、可重复读(repeatable read)、串行化(serializable)。</p>
+<p>读未提交是指,一个事务还没提交时,它做的变更就能被别的事务看到.<br>
+读提交是指,一个事务提交之后,它做的变更才会被其他事务看到.<br>
+可重复读是指,一个事务执行过程中看到的数据,总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下,未提交变更对其他事务<br>
+是也是不可见的.<br>
+串行化,顾名思义是对于同一行记录,&quot;写&quot;会加&quot;写锁&quot;,&quot;读&quot;会加&quot;读锁&quot;.当出现读写锁冲突的时候,后访问的事务必须等前一个事务执行完成,才能继续执行.<br>
+假设数据表找中T中只有一列,其中一行的值为1,下面是按照时间顺序执行两个事务的行为.<br>
+mysql&gt; create table T(c int) engine=InnoDB;<br>
+insert into T(c) values(1);<br>
+<img src="https://codingheping.github.io/post-images/1604999575410.png" alt="" loading="lazy"></p>
+<pre><code>若隔离级别是&quot;读未提交&quot;,则V1的值就是2,这时候事务B虽然还没有提交,但是结果已经被A看到了.因此,V2、V3也都是2.
+若隔离级别是&quot;读提交&quot;,则V1是1,V2的值是2.事务B的更新在提交后才能被A看到.所以,V3的值也是2.
+若隔离级别是&quot;可重复读&quot;,则V1、V2是1,V3是2.之所以V2还是1,遵循的就是这个要求:事务在执行期间靠到的数据前后必须是一致的.
+若隔离界别是&quot;串行化&quot;,则在事务B执行&quot;将1改成2&quot;的时候,会被锁住.直到事务A提交后,事务B才可以继续执行.所以从A的角度看,V1、V2的值是1,
+V3的值是2.
+在实现上,数据库里面会创建一个视图,访问的时候以视图的逻辑结果为准.在&quot;可重复读&quot;隔离级别下,这个视图是在事务启动时创建的,
+整个事务存在期间都用这个视图.在&quot;读提交&quot;隔离级别下,这个视图是在每个SQL语句开始执行的时候创建的.这里需要注意的是,&quot;读未提交&quot;隔离级别下
+直接返回记录上的最新值,没有视图概念;而&quot;串行化&quot;隔离级别下直接用加锁的方式来避免并行访问.
+</code></pre>
+<h2 id="事务隔离级别的实现">事务隔离级别的实现</h2>
+<p>在MySQL中,实际上每条记录在更新的时候都会同时记录一条回滚操作.记录上的最新值,通过回滚操作.都可以得到前一个状态的值.<br>
+假设一个值从1被按顺序改成了2、3、4,在回滚日志里面就会有类似下面的记录.<br>
+<img src="https://static001.geekbang.org/resource/image/d9/ee/d9c313809e5ac148fc39feff532f0fee.png" alt="avatar" loading="lazy"><br>
+当前值是4,但是在查询这条记录的时候,不同时刻启动的事务会有不同的read-view.如图中看到的,在视图A、B、C里面,这一个记录的值分别<br>
+是1、2、4,同一条记录在系统中可以存在多个版本,就是数据库的多版本并发控制(MVCC).对于 read-view A，要得到 1，就必须将当前值依次执行图中的所有回滚操作.<br>
+即使现在有另外一个事务正在将4改成5,这个事务跟read-view A、B、C对应的事务是不会冲突的.</p>
+<p>回滚日志在不需要的时候会删除,不会一直保存.<br>
+尽量不要使用长事务.</p>
+<h2 id="事务的启动方式">事务的启动方式</h2>
+<p>1.显式启动事务语句,begin 或start transaction.配套的提交语句是commit,回滚是rollback。<br>
+2.set autocommit=0,这个命令会将这个线程的自动提交关闭。意味着你如果只执行select语句.这个事务就启动了,而且不会自动提交.这个事务<br>
+持续存在直到你主动执行commit或rollback语句,或者断开连接.</p>
+<p>建议用显式语句的方式来启动事务.</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[SQL批量更新]]></title>
+        <id>https://codingheping.github.io/post/sql-pi-liang-geng-xin/</id>
+        <link href="https://codingheping.github.io/post/sql-pi-liang-geng-xin/">
+        </link>
+        <updated>2020-11-10T09:11:11.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="一般的sql更新语句">一般的SQL更新语句:</h2>
+<p>UPDATE mytable SET myfield = 'value' WHERE other_field = 'other_value';</p>
+<h2 id="如果更新同一字段为同一个值">如果更新同一字段为同一个值</h2>
+<p>UPDATE mytable set myfield ='value' WHERE other_field IN('other_values');</p>
+<h2 id="批量更新方案">批量更新方案</h2>
+<p>CASE WHEN<br>
+UPDATE mytable SET<br>
+myfield = CASE id<br>
+WHEN 1 THEN 'value'<br>
+WHEN 2 THEN 'value'<br>
+WHEN 3 THEN 'value'<br>
+END,<br>
+myfield1 = CASE id<br>
+WHEN 1 THEN 'value1'<br>
+WHEN 2 THEN 'value2'<br>
+WHEN 3 THEN 'value3'<br>
+END<br>
+WHERE id IN (1,2,3)<br>
+SQL的意思是更新myfield字段当id为1的时候值为value......,更新myfield1字段当id为1的时候<br>
+值为'value1'....</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Mysql查询执行流程]]></title>
         <id>https://codingheping.github.io/post/mysql-cha-xun-zhi-xing-liu-cheng/</id>
@@ -657,387 +839,6 @@ VALUES
 	('1003', 'C004', 90),	('1004', 'C004', 91),	('1005', 'C004', 92),	('1006', 'C004', 93),	('1001', 'C005', 77),
 	('1002', 'C005', 78),	('1003', 'C005', 79);
 
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[vue.socket-io连接hyperf.socket-io服务]]></title>
-        <id>https://codingheping.github.io/post/vuesocket-io-lian-jie-hyperfsocket-io-fu-wu/</id>
-        <link href="https://codingheping.github.io/post/vuesocket-io-lian-jie-hyperfsocket-io-fu-wu/">
-        </link>
-        <updated>2020-11-08T15:27:14.000Z</updated>
-        <content type="html"><![CDATA[<figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604849329083.jpg" alt="" loading="lazy"></figure>
-<p>Last Edited By: he peter<br>
-修改时间: Nov 8, 2020 11:25 PM<br>
-创建人: he peter<br>
-标签: sokcet.io,hyperf<br>
-项目创建时间: Nov 8, 2020 11:16 PM</p>
-<h2 id="1mainjs引入socket-io相关文件">1.main.js引入socket-io相关文件</h2>
-<pre><code class="language-jsx">import VueSocketIO from 'vue-socket.io';
-
-import SocketIO from 'socket.io-client';
-</code></pre>
-<h2 id="2初始化socket-io">2.初始化socket-io</h2>
-<pre><code class="language-jsx">const token = `${getToken()}`
-
-const socketInstance = SocketIO(process.env.WEB_SOCKET_URL, {
-  transports: ['websocket','polling'],
-  transportOptions: {
-    polling: {
-      extraHeaders: {
-        Authorization: token
-      }
-    }
-  },
-  query:{
-    token:token
-  }
-});
-
-this.socket = new VueSocketIO({
-  debug: true,
-  connection: socketInstance
-})
-// Websocket 连接成功回调方法
-this.socket.io.on('connect', () =&gt; {
-  store.commit('UPDATE_SOCKET_STATUS', true);
-})
-// Websocket 断开连接回调方法
-this.socket.io.on('disconnect', () =&gt; {
-  store.commit('UPDATE_SOCKET_STATUS', false);
-})
-// Websocket 断开连接回调方法
-this.socket.io.on('reconnect', () =&gt; {
-  store.commit('UPDATE_SOCKET_STATUS', true);
-})
-Vue.use(this.socket)
-</code></pre>
-<h2 id="3组件中使用">3.组件中使用</h2>
-<pre><code class="language-jsx">sockets: {
-  // 三个默认方法
-  // 链接成功
-  connect () {
-    console.log('socket connected')
-  },
-  // 链接失败
-  disconnect () {
-    console.log('socket disconnect')
-  },
-  // 重新连接
-  reconnect () {
-    console.log('socket reconnect')
-  },
-  // 第二种：监听、接收消息方法
-  event (data) {
-    console.log(data, 'TEAM_NOTICE，推送的消息')
-  }
-},
-</code></pre>
-<h2 id="4发送socket-io消息">4.发送socket-io消息</h2>
-<pre><code class="language-jsx">mounted() {
-  this.scrollEvent();
-  // 第一种：监听，接收消息
-  this.$socket.emit('event', {
-    projectId: '88',
-    theme: 'getUserInfo',
-    time: 10000,
-  });
-},
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Hyperf搭建socket-io服务]]></title>
-        <id>https://codingheping.github.io/post/hyperf-da-jian-socket-io-fu-wu/</id>
-        <link href="https://codingheping.github.io/post/hyperf-da-jian-socket-io-fu-wu/">
-        </link>
-        <updated>2020-11-04T15:37:22.000Z</updated>
-        <content type="html"><![CDATA[<p><img src="https://codingheping.github.io/post-images/1604505686106.jpg" alt="" loading="lazy"><br>
-Last Edited By: he peter<br>
-修改时间: Nov 4, 2020 11:35 PM<br>
-创建人: he peter<br>
-标签: Hyperf<br>
-项目创建时间: Nov 4, 2020 11:23 PM</p>
-<h2 id="背景">背景</h2>
-<p>自己一直想做一个分布式的IM,开始想的就是利用hyperf搭建个rpc服务做个消息代理,写了很久转过头来看了看hyperf的socket-io服务,发现他底层提供的RedisAdpater和RedisNsqAdpater提供处理分布式关系建立,然后利用redis的广播(pub,sub)或者NSQ建立一个Topic,每个socket服务单独建立一个channel，然后获取全部channel，给全部channel消费.</p>
-<h3 id="1安装socket-io">1.安装socket-io</h3>
-<pre><code class="language-bash">composer require hyperf/socketio-server
-</code></pre>
-<h2 id="2配置server">2.配置server</h2>
-<pre><code class="language-php">// config/autoload/server.php
-[
-    'name' =&gt; 'socket-io',
-    'type' =&gt; Server::SERVER_WEBSOCKET,
-    'host' =&gt; '0.0.0.0',
-    'port' =&gt; 9502,
-    'sock_type' =&gt; SWOOLE_SOCK_TCP,
-    'callbacks' =&gt; [
-        SwooleEvent::ON_HAND_SHAKE =&gt; [Hyperf\WebSocketServer\Server::class, 'onHandShake'],
-        SwooleEvent::ON_MESSAGE =&gt; [Hyperf\WebSocketServer\Server::class, 'onMessage'],
-        SwooleEvent::ON_CLOSE =&gt; [Hyperf\WebSocketServer\Server::class, 'onClose'],
-    ],
-],
-</code></pre>
-<h3 id="3搭建服务端">3.搭建服务端</h3>
-<pre><code class="language-php">&lt;?php
-declare(strict_types=1);
-
-namespace App\Controller;
-
-use Hyperf\SocketIOServer\Annotation\Event;
-use Hyperf\SocketIOServer\Annotation\SocketIONamespace;
-use Hyperf\SocketIOServer\BaseNamespace;
-use Hyperf\SocketIOServer\Socket;
-use Hyperf\Utils\Codec\Json;
-
-/**
- * @SocketIONamespace(&quot;/&quot;)
- */
-class WebSocketController extends BaseNamespace
-{
-    /**
-     * @Event(&quot;event&quot;)
-     * @param string $data
-     */
-    public function onEvent(Socket $socket, $data)
-    {
-        // 应答
-        return 'Event Received: ' . $data;
-    }
-
-    /**
-     * @Event(&quot;join-room&quot;)
-     * @param string $data
-     */
-    public function onJoinRoom(Socket $socket, $data)
-    {
-        // 将当前用户加入房间
-        $socket-&gt;join($data);
-        // 向房间内其他用户推送（不含当前用户）
-        $socket-&gt;to($data)-&gt;emit('event', $socket-&gt;getSid() . &quot;has joined {$data}&quot;);
-        // 向房间内所有人广播（含当前用户）
-        $this-&gt;emit('event', 'There are ' . count($socket-&gt;getAdapter()-&gt;clients($data)) . &quot; players in {$data}&quot;);
-    }
-
-    /**
-     * @Event(&quot;say&quot;)
-     * @param string $data
-     */
-    public function onSay(Socket $socket, $data)
-    {
-        $data = Json::decode($data);
-        $socket-&gt;to($data['room'])-&gt;emit('event', $socket-&gt;getSid() . &quot; say: {$data['message']}&quot;);
-    }
-}
-
-</code></pre>
-<h2 id="4配置房间适配器利用redisnsqadapter处理分布式">4.配置房间适配器,利用RedisNsqAdapter处理分布式</h2>
-<pre><code class="language-php">&lt;?php
-
-declare(strict_types = 1);
-
-/**
- * This file is part of Hyperf.
- *
- * @link     https://www.hyperf.io
- * @document https://hyperf.wiki
- * @contact  group@hyperf.io
- * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
- */
-
-use Hyperf\SocketIOServer\Room\AdapterInterface;
-use Hyperf\SocketIOServer\Room\RedisNsqAdapter;
-use Hyperf\SocketIOServer\SocketIO;
-use App\Kernel\SocketIO as KernelSocketIO;
-use Hyperf\JsonRpc\JsonRpcPoolTransporter;
-use Hyperf\JsonRpc\JsonRpcTransporter;
-use Hyperf\Utils\Serializer\SerializerFactory;
-use Hyperf\Utils\Serializer\Serializer;
-
-return [
-    AdapterInterface::class                    =&gt; RedisNsqAdapter::class,
-    SocketIO::class                            =&gt; KernelSocketIO::class,
-    JsonRpcTransporter::class                  =&gt; JsonRpcPoolTransporter::class,
-    Hyperf\Contract\NormalizerInterface::class =&gt; new SerializerFactory(Serializer::class),
-];
-</code></pre>
-<h2 id="5重写socket-io主要用于用户上线通知下线通知">5.重写socket-io(主要用于用户上线通知,下线通知)</h2>
-<pre><code class="language-php">&lt;?php
-declare(strict_types = 1);
-
-namespace App\Kernel;
-
-use App\JsonRpc\Contract\InterfaceUserService;
-use App\Log;
-use Hyperf\Redis\RedisFactory;
-use Hyperf\WebSocketServer\Context as WsContext;
-use Phper666\JWTAuth\Exception\TokenValidException;
-use Swoole\Http\Request;
-use Hyperf\Di\Annotation\Inject;
-
-class SocketIO extends \Hyperf\SocketIOServer\SocketIO
-{
-    protected $pingTimeout = 2000;
-
-    protected $pingInterval = 10000; //心跳间隔6秒
-
-    protected $clientCallbackTimeout = 2000;
-
-    public const HASH_UID_TO_FD_PREFIX = 'hash.socket_user';
-
-    /**
-     * @Inject
-     * @var \Phper666\JWTAuth\JWT
-     */
-    protected $jwt;
-
-    /**
-     * @Inject()
-     * @var \App\Service\UserService
-     */
-    protected $userService;
-
-    /**
-     * @Inject()
-     * @var \App\Service\UserFriendService
-     */
-    protected $userFriendService;
-
-    /**
-     * @param \Swoole\Http\Response|\Swoole\WebSocket\Server $server
-     * @param \Swoole\Http\Request                           $request
-     *
-     * @throws \Throwable
-     */
-    public function onOpen($server, Request $request) : void
-    {
-        try {
-            $isValidToken = false;
-            $token        = $request-&gt;get['token'] ?? '';
-            if (strlen($token) &gt; 0) {
-                if (di(InterfaceUserService::class)-&gt;checkToken($token)) {
-                    $isValidToken = true;
-                }
-            }
-            if (!$isValidToken) {
-                throw new TokenValidException('Token authentication does not pass', 401);
-            }
-        } catch (\Throwable $throwable) {
-            $this-&gt;stdoutLogger-&gt;error(sprintf('[%s] [%s]', $throwable-&gt;getMessage(), $throwable-&gt;getCode()));
-            $server-&gt;close($request-&gt;fd);
-            return;
-        }
-
-        $userData = di(InterfaceUserService::class)-&gt;decodeToken($token);
-        $uid      = $userData['cloud_uid'] ?? 0;
-        $rpcUser  = di(InterfaceUserService::class);
-        $user     = $rpcUser-&gt;get($uid);
-        //TODO 建立json-rpc客户端获取用户详细信息
-        WsContext::set('user', array_merge(
-            ['user' =&gt; $user],
-            ['sid' =&gt; $this-&gt;sidProvider-&gt;getSid($request-&gt;fd)]));
-        //判断用户是否在其它地方登录
-        $redis    = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
-        $isOnline = $sid = $redis-&gt;hGet(self::HASH_UID_TO_FD_PREFIX, (string)$uid);
-        $redis-&gt;multi();
-        if ($sid) {
-            //解除之前的关系
-            $redis-&gt;hDel(self::HASH_UID_TO_FD_PREFIX, (string)$uid);
-            $this-&gt;to($sid)-&gt;emit('leave', '您的账号在其他地方登录,请注意是否是账号信息被泄漏,请及时更改密码!');
-        }
-        unset($sid);
-        $sid = $this-&gt;sidProvider-&gt;getSid($request-&gt;fd);
-        // 绑定用户与fd该功能
-        $redis-&gt;hSet(self::HASH_UID_TO_FD_PREFIX, (string)$uid, $sid);
-        $redis-&gt;exec();
-
-        // 绑定聊天群
-        $groups = $this-&gt;userService-&gt;getUserGroupIds($uid);
-        if ($groups) {
-            foreach ($groups as $group) {
-                $this-&gt;getAdapter()-&gt;add(
-                    $this-&gt;sidProvider-&gt;getSid($request-&gt;fd),
-                    'room' . (string)$group);
-            }
-        }
-        if (!$isOnline) {
-            //获取所有好友的用户ID
-            $uids       = $this-&gt;userFriendService-&gt;getFriends($uid);
-            $friendSids = [];//所有好友的客户端socketid(sid)
-            foreach ($uids as $friend) {
-                $friendSids = array_push($friendSids, $redis-&gt;hGet(self::HASH_UID_TO_FD_PREFIX, (string)$friend));
-            }
-            //推送好友上线通知
-            if ($friendSids) {
-                $this-&gt;to($sid)-&gt;emit('login_notify', $friendSids, ['user_id' =&gt; $uid, 'status' =&gt; 1, 'notify' =&gt; '好友上线通知...']);
-            }
-        }
-        // 绑定聊天群
-        parent::onOpen($server, $request);
-    }
-
-    /**
-     * @param \Swoole\Http\Response|\Swoole\Server $server
-     * @param int                                  $fd
-     * @param int                                  $reactorId
-     *
-     * @throws \Throwable
-     */
-    public function onClose($server, int $fd, int $reactorId) : void
-    {
-        /**
-         * @var array $user
-         */
-        $user = WsContext::get('user');
-        // 获取客户端对应的用户ID
-        // 清除用户绑定信息
-        $redis = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
-        $redis-&gt;hDel(self::HASH_UID_TO_FD_PREFIX, (string)$user['user']['id']);
-        // 将fd 退出所有聊天室
-        $this-&gt;getAdapter()-&gt;del($user['sid']);
-        WsContext::destroy('user');
-        //获取所有好友的用户ID
-        $uids       = $this-&gt;userFriendService-&gt;getFriends($user['user']['id']);
-        $friendSids = [];//所有好友的客户端socketid(sid)
-        foreach ($uids as $friend) {
-            $friendSids = array_push($friendSids, $redis-&gt;hGet(self::HASH_UID_TO_FD_PREFIX, (string)$friend));
-        }
-        //推送好友下线通知
-        if ($friendSids) {
-            $this-&gt;to($user['sid'])-&gt;emit('login_notify', $friendSids, [
-                'user_id' =&gt; $user['id'],
-                'status'  =&gt; 0,
-                'notify'  =&gt; '好友离线通知...'
-            ]);
-        }
-        // 判断用户是否多平台登录
-        parent::onClose($server, $fd, $reactorId);
-    }
-}
-
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[利用redis存储websocket或tcp的fd功能和聊天室内的fd]]></title>
-        <id>https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/</id>
-        <link href="https://codingheping.github.io/post/li-yong-redis-cun-chu-websocket-huo-tcp-de-fd-gong-neng-he-liao-tian-shi-nei-de-fd/">
-        </link>
-        <updated>2020-11-04T09:33:47.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="利用redis存储websocket或tcp的fd功能和聊天室内的fd">利用redis存储websocket或tcp的fd功能和聊天室内的fd</h1>
-<p>Last Edited By: he peter<br>
-修改时间: Nov 4, 2020 5:31 PM<br>
-创建人: he peter<br>
-标签: websocket<br>
-项目创建时间: Oct 21, 2020 10:08 AM</p>
-<h1 id="利用redis的hash类型存储fd">利用redis的hash类型存储fd</h1>
-<pre><code class="language-php">$redis = di(RedisFactory::class)-&gt;get(env('CLOUD_REDIS'));
-//bind key to fd
-$redis-&gt;hSet(self::HASH_KEY_TO_FD_PREFIX, $key, $fd);
-</code></pre>
-<h1 id="利用set无序集合存储聊天室内的fd">利用set无序集合存储聊天室内的fd</h1>
-<pre><code class="language-php">//add fd to room
-$redis-&gt;sAdd(sprintf('%s.%s', self::SET_ROOM_FD_PREFIX, $roomId), $fd);
 </code></pre>
 ]]></content>
     </entry>

@@ -1,0 +1,224 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>事务隔离 | codingheping</title>
+<link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604999723940">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="事务隔离 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="事务
+事务就是保证一组数据库操作,要么全部成功,要么全部失败.MySQL原生的MyISAM引擎不支持事务.
+特性:ACID(原子性、一致性、隔离性、持久性)
+隔离性与隔离级别
+当数据库上有多个事务同时执行的时候,就可能出现脏读(dirty ..." />
+    <meta name="keywords" content="Mysql" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://codingheping.github.io">
+  <img class="avatar" src="https://codingheping.github.io/images/avatar.png?v=1604999723940" alt="">
+  </a>
+  <h1 class="site-title">
+    codingheping
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/codingheping" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              事务隔离
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-11-10
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://codingheping.github.io/tag/KeeNu9X4Q/" class="post-tag">
+                  # Mysql
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="事务">事务</h2>
+<p>事务就是保证一组数据库操作,要么全部成功,要么全部失败.MySQL原生的MyISAM引擎不支持事务.<br>
+特性:ACID(原子性、一致性、隔离性、持久性)</p>
+<h2 id="隔离性与隔离级别">隔离性与隔离级别</h2>
+<p>当数据库上有多个事务同时执行的时候,就可能出现脏读(dirty read)、不可重复读(non-repeatable read)、幻读(phantom read)的问题.<br>
+SQL标准的事务隔离级别包括:读未提交(read uncommitted)、读提交(read committed)、可重复读(repeatable read)、串行化(serializable)。</p>
+<p>读未提交是指,一个事务还没提交时,它做的变更就能被别的事务看到.<br>
+读提交是指,一个事务提交之后,它做的变更才会被其他事务看到.<br>
+可重复读是指,一个事务执行过程中看到的数据,总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下,未提交变更对其他事务<br>
+是也是不可见的.<br>
+串行化,顾名思义是对于同一行记录,&quot;写&quot;会加&quot;写锁&quot;,&quot;读&quot;会加&quot;读锁&quot;.当出现读写锁冲突的时候,后访问的事务必须等前一个事务执行完成,才能继续执行.<br>
+假设数据表找中T中只有一列,其中一行的值为1,下面是按照时间顺序执行两个事务的行为.<br>
+mysql&gt; create table T(c int) engine=InnoDB;<br>
+insert into T(c) values(1);<br>
+<img src="https://codingheping.github.io/post-images/1604999575410.png" alt="" loading="lazy"></p>
+<pre><code>若隔离级别是&quot;读未提交&quot;,则V1的值就是2,这时候事务B虽然还没有提交,但是结果已经被A看到了.因此,V2、V3也都是2.
+若隔离级别是&quot;读提交&quot;,则V1是1,V2的值是2.事务B的更新在提交后才能被A看到.所以,V3的值也是2.
+若隔离级别是&quot;可重复读&quot;,则V1、V2是1,V3是2.之所以V2还是1,遵循的就是这个要求:事务在执行期间靠到的数据前后必须是一致的.
+若隔离界别是&quot;串行化&quot;,则在事务B执行&quot;将1改成2&quot;的时候,会被锁住.直到事务A提交后,事务B才可以继续执行.所以从A的角度看,V1、V2的值是1,
+V3的值是2.
+在实现上,数据库里面会创建一个视图,访问的时候以视图的逻辑结果为准.在&quot;可重复读&quot;隔离级别下,这个视图是在事务启动时创建的,
+整个事务存在期间都用这个视图.在&quot;读提交&quot;隔离级别下,这个视图是在每个SQL语句开始执行的时候创建的.这里需要注意的是,&quot;读未提交&quot;隔离级别下
+直接返回记录上的最新值,没有视图概念;而&quot;串行化&quot;隔离级别下直接用加锁的方式来避免并行访问.
+</code></pre>
+<h2 id="事务隔离级别的实现">事务隔离级别的实现</h2>
+<p>在MySQL中,实际上每条记录在更新的时候都会同时记录一条回滚操作.记录上的最新值,通过回滚操作.都可以得到前一个状态的值.<br>
+假设一个值从1被按顺序改成了2、3、4,在回滚日志里面就会有类似下面的记录.<br>
+<img src="https://static001.geekbang.org/resource/image/d9/ee/d9c313809e5ac148fc39feff532f0fee.png" alt="avatar" loading="lazy"><br>
+当前值是4,但是在查询这条记录的时候,不同时刻启动的事务会有不同的read-view.如图中看到的,在视图A、B、C里面,这一个记录的值分别<br>
+是1、2、4,同一条记录在系统中可以存在多个版本,就是数据库的多版本并发控制(MVCC).对于 read-view A，要得到 1，就必须将当前值依次执行图中的所有回滚操作.<br>
+即使现在有另外一个事务正在将4改成5,这个事务跟read-view A、B、C对应的事务是不会冲突的.</p>
+<p>回滚日志在不需要的时候会删除,不会一直保存.<br>
+尽量不要使用长事务.</p>
+<h2 id="事务的启动方式">事务的启动方式</h2>
+<p>1.显式启动事务语句,begin 或start transaction.配套的提交语句是commit,回滚是rollback。<br>
+2.set autocommit=0,这个命令会将这个线程的自动提交关闭。意味着你如果只执行select语句.这个事务就启动了,而且不会自动提交.这个事务<br>
+持续存在直到你主动执行commit或rollback语句,或者断开连接.</p>
+<p>建议用显式语句的方式来启动事务.</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BA%8B%E5%8A%A1">事务</a></li>
+<li><a href="#%E9%9A%94%E7%A6%BB%E6%80%A7%E4%B8%8E%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB">隔离性与隔离级别</a></li>
+<li><a href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E7%9A%84%E5%AE%9E%E7%8E%B0">事务隔离级别的实现</a></li>
+<li><a href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F">事务的启动方式</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://codingheping.github.io/post/sql-pi-liang-geng-xin/">
+              <h3 class="post-title">
+                SQL批量更新
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://codingheping.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

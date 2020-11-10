@@ -2,20 +2,18 @@
   <head>
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mysql查询执行流程 | codingheping</title>
+<title>锁 | codingheping</title>
 <link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604999723940">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="Mysql查询执行流程 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="alternate" type="application/atom+xml" title="锁 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
-    <meta name="description" content="MySQL SQL语句执行流程
-
-大体来说,MySQL可以分为Server层和存储引擎层两部分.
-Server层包括连接器、查询缓存、分析器、优化器、执行器等,涵盖MySQL的大多数核心服务功能,以及
-所有的内置函数(如日期,时间,数学和加..." />
+    <meta name="description" content="全局锁
+全局锁是对整个数据库实例枷锁.MySQL提供了一个加全局读锁的方法,命令是Flush tables with read lock(FTWRL).当你需要让整个库处于只读状态的时候,可以使用这个命令,
+之后其他线程的以下语句会被阻塞:..." />
     <meta name="keywords" content="Mysql" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
@@ -82,14 +80,14 @@ Server层包括连接器、查询缓存、分析器、优化器、执行器等,�
         <div class="post-detail">
           <article class="post">
             <h2 class="post-title">
-              Mysql查询执行流程
+              锁
             </h2>
             <div class="post-info">
               <span>
                 2020-11-10
               </span>
               <span>
-                2 min read
+                4 min read
               </span>
               
                 <a href="https://codingheping.github.io/tag/KeeNu9X4Q/" class="post-tag">
@@ -98,50 +96,43 @@ Server层包括连接器、查询缓存、分析器、优化器、执行器等,�
               
             </div>
             
-              <img class="post-feature-image" src="https://codingheping.github.io/post-images/mysql-cha-xun-zhi-xing-liu-cheng.jpg" alt="">
-            
             <div class="post-content-wrapper">
               <div class="post-content">
-                <h2 id="mysql-sql语句执行流程">MySQL SQL语句执行流程</h2>
-<figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604999295879.png" alt="" loading="lazy"></figure>
-<p>大体来说,MySQL可以分为Server层和存储引擎层两部分.<br>
-Server层包括连接器、查询缓存、分析器、优化器、执行器等,涵盖MySQL的大多数核心服务功能,以及<br>
-所有的内置函数(如日期,时间,数学和加密函数),所有跨存储引擎的功能都在这一层实现,比如存储过程<br>
-触发器、视图等.</p>
-<p>存储引擎只负责数据的存储和提取.其架构模式是插件式的,支持InnoDB、MyiSAM、Memory<br>
-等多个存储引擎,现在最常用的存储引擎是InnoDB.从MySQL5.5.5版本开始成为了默认引擎.</p>
-<h3 id="连接器">连接器.</h3>
-<p>第一步,先连接到数据库服务器上,这时候接待你的就是连接器.连接器负责跟客户端建立连接、获取权限、维持和管理连接.<br>
-连接命令: mysql -h<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi><mi>p</mi><mo>−</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">ip -p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">i</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">p</span></span></span></span>port -u$user -p</p>
-<h3 id="查询缓存">查询缓存</h3>
-<p>连接建立完成后,就可以执行select语句了.执行逻辑来到第二步:查询缓存.</p>
-<p>MySQL拿到一个查询请求后,会先到查询缓存查看,如果命中查询缓存就以key-value的形式返回.<br>
-如果没有命中缓存,就进入下一个执行阶段.<br>
-不建议开启缓存,MySQL8.0废弃了查询缓存.</p>
-<h3 id="分析器">分析器</h3>
-<p>没有命中查询缓存,开始执行语句,MySQL对SQL语句做解析.查看SQL语句是否满足MySQL语法,<br>
-如果不满足就抛出错误.</p>
-<h3 id="优化器">优化器</h3>
-<p>经过了分析器,还要经过优化器.优化器是在表里有多个索引时,决定使用哪个索引;或者在一个语句中有多表<br>
-关联(join),决定各个表的连接顺序.</p>
-<h3 id="执行器">执行器</h3>
-<p>开始执行的时候,判断一下对这个表有没有执行查询的权限,如果没有,就会返回没有权限的错误,如果有权限,就打开表<br>
-继续执行。打开表的时候,执行器就会根据表的引擎定义,去使用(InnoDB,MyiSAM)引擎提供的接口.然后返回执行的结果.</p>
+                <h2 id="全局锁">全局锁</h2>
+<p>全局锁是对整个数据库实例枷锁.MySQL提供了一个加全局读锁的方法,命令是Flush tables with read lock(FTWRL).当你需要让整个库处于只读状态的时候,可以使用这个命令,<br>
+之后其他线程的以下语句会被阻塞:数据更新语句(数据的增删改)、数据定义语句(建表、修改表结构等)和更新类事务的提交语句.</p>
+<p>全局锁的典型使用场景是,做全库逻辑备份.</p>
+<h2 id="表级锁">表级锁</h2>
+<p>MySQL里面表级别的锁有两种:一种是表锁,一种是元数据锁.(meta data lock)<br>
+表锁的语法是lock tables ...read/write.可以用unlock tables主动释放锁.举个例子,如果某个线程A中执行lock tables t1 read,t2 write;这个语句,则其他线程写t1、读写t2的语句<br>
+都会被阻塞.同时,线程A在执行unlock tables之前,也只能执行读t1、读写t2的操作.练写t1都不允许,自然也不能访问其他表.</p>
+<p>另一类表级的锁是MDL(metadata lock).MDL不需要显式使用,在访问一个表的时候会被自动加上.MDL的作用是,保证读写的正确性.<br>
+读锁之间不互斥,可以有多个线程同时对一张表增删改查.<br>
+读写锁之间、写锁之间是互斥的,用来保证变更表结构操作的安全性.因此,如果有两个线程要同时给一个表加字段,其中一个要等另一个执行完才能执行.</p>
+<h2 id="行锁">行锁</h2>
+<p>行锁是针对数据表中行记录的锁.比如事务A更新了一行,而这时候事务B也要更新同一行,则必须等事务A的操作完成后才能进行更新.</p>
+<p>在InnoDB事务中,行锁是在需要的时候才加上的,但并不是不需要了就立刻释放,而是要等到事务结束时才释放.这个就是两阶段锁协议。<br>
+如果事务中需要锁多个行,要把最可能造成锁冲突、最可能影响并发度的锁尽量往后放.</p>
+<h2 id="死锁和死锁检测">死锁和死锁检测</h2>
+<p>当并发系统中不同线程出现循环资源依赖,涉及的线程都在等待别的线程释放资源时,就会导致这几个线程都进入无线等待的状态,称为死锁.<br>
+用数据库中的行锁举个例子:<br>
+<img src="https://static001.geekbang.org/resource/image/4d/52/4d0eeec7b136371b79248a0aed005a52.jpg" alt="avatar" loading="lazy"><br>
+这时候,事务A在等待事务B释放id=2的行锁,而事务B在等待事务A释放id=1的行锁.事务A和事务B在互相等待对方的资源释放,就是进入了死锁状态.<br>
+当出现死锁以后,有两种策略:<br>
+1.直接进入等待,直到超时.这个超时时间可以通过参数innodb_lock_wait_timeout来设置.<br>
+2.发起死锁检测,发现死锁后,主动回滚死锁链条中的某一个事务,让其他事务得已继续执行.将参数innodb_deadlock_detect设置为on,表示开启这个逻辑.</p>
+<p>在InnoDB中,innodb_lock_wait_timeout的默认值是50s,意味着如果采用第一个策略,当出现死锁以后,第一个被锁住的线程要过50s才会超时退出,然后其他线程才有可能继续<br>
+执行.这个等待时间是无法接受的.所以一般还是采用主动死锁检测.</p>
 
               </div>
               <div class="toc-container">
                 <ul class="markdownIt-TOC">
 <li>
 <ul>
-<li><a href="#mysql-sql%E8%AF%AD%E5%8F%A5%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B">MySQL SQL语句执行流程</a>
-<ul>
-<li><a href="#%E8%BF%9E%E6%8E%A5%E5%99%A8">连接器.</a></li>
-<li><a href="#%E6%9F%A5%E8%AF%A2%E7%BC%93%E5%AD%98">查询缓存</a></li>
-<li><a href="#%E5%88%86%E6%9E%90%E5%99%A8">分析器</a></li>
-<li><a href="#%E4%BC%98%E5%8C%96%E5%99%A8">优化器</a></li>
-<li><a href="#%E6%89%A7%E8%A1%8C%E5%99%A8">执行器</a></li>
-</ul>
-</li>
+<li><a href="#%E5%85%A8%E5%B1%80%E9%94%81">全局锁</a></li>
+<li><a href="#%E8%A1%A8%E7%BA%A7%E9%94%81">表级锁</a></li>
+<li><a href="#%E8%A1%8C%E9%94%81">行锁</a></li>
+<li><a href="#%E6%AD%BB%E9%94%81%E5%92%8C%E6%AD%BB%E9%94%81%E6%A3%80%E6%B5%8B">死锁和死锁检测</a></li>
 </ul>
 </li>
 </ul>
@@ -154,9 +145,9 @@ Server层包括连接器、查询缓存、分析器、优化器、执行器等,�
         
           <div class="next-post">
             <div class="next">下一篇</div>
-            <a href="https://codingheping.github.io/post/mysql-geng-xin-zhi-xing-liu-cheng/">
+            <a href="https://codingheping.github.io/post/ju-cu-suo-yin-he-fei-ju-cu-suo-yin/">
               <h3 class="post-title">
-                Mysql更新执行流程
+                聚簇索引和非聚簇索引
               </h3>
             </a>
           </div>
