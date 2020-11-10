@@ -1,0 +1,218 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mysql更新执行流程 | codingheping</title>
+<link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604999341479">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Mysql更新执行流程 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="MySQL SQL语句执行流程
+
+与MySQL查询流程一样,更新流程还涉及两个重要的日志模块,redo log(重做日志)和binlog(归档日志).
+redo log
+如果每一次的的更新操作都需要写进磁盘,然后磁盘也要找到对应的那条记录,..." />
+    <meta name="keywords" content="Mysql" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://codingheping.github.io">
+  <img class="avatar" src="https://codingheping.github.io/images/avatar.png?v=1604999341479" alt="">
+  </a>
+  <h1 class="site-title">
+    codingheping
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/codingheping" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Mysql更新执行流程
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-11-10
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://codingheping.github.io/tag/KeeNu9X4Q/" class="post-tag">
+                  # Mysql
+                </a>
+              
+            </div>
+            
+              <img class="post-feature-image" src="https://codingheping.github.io/post-images/mysql-geng-xin-zhi-xing-liu-cheng.png" alt="">
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="mysql-sql语句执行流程">MySQL SQL语句执行流程</h2>
+<figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604999136696.png" alt="" loading="lazy"></figure>
+<p>与MySQL查询流程一样,更新流程还涉及两个重要的日志模块,redo log(重做日志)和binlog(归档日志).</p>
+<h2 id="redo-log">redo log</h2>
+<p>如果每一次的的更新操作都需要写进磁盘,然后磁盘也要找到对应的那条记录,然后再更新,整个IO成本、查找成本很高.MySQL里使用的是<br>
+WAL技术,WAL的全称是Write-Ahead Logging.它的关键点是先写日志,再写磁盘.具体来说,当有一条记录需要更新的时候,InnoDB引擎就会先把记录写到redo log里面,<br>
+并更新内存.这个时候更新就算完成了.同时,InnoDB引擎会在适当的时候,将这个操作记录更新到磁盘里面,而这个更新往往是在系统比较空闲的时候做.</p>
+<p>InnoDB的redo log是固定大小的,比如可以配置为一组4个文件,每个文件的大小是1GB,那么总共可以记录4GB的操作.从头开始写,写到末尾就又回到开头循环写.如图所示:<br>
+<img src="https://codingheping.github.io/post-images/1604999149606.png" alt="" loading="lazy"><br>
+write pos是当前记录的位置,一边写一边往后移,写到第3号文件末尾后就回到0号文件开头.checkpoint是当前要擦除的位置,也是往后移并且循环的,擦除记录<br>
+前要把记录更新到数据文件.<br>
+有了redo log,InnoDB就可以保证即使数据库发送异常重启,之前提交的记录都不会丢失,这个能力成为crash-safe.</p>
+<h2 id="bin-log">bin log</h2>
+<p>redo log是InnoDB引擎特有的日志,而Server层也有自己的日志,称为binlog(归档日志).为什么有两份日志?因为最开始MySQL里并没有InnoDB引擎.<br>
+MySQL自带的引擎是MyISAM,但是MyISAM没有crash-safe的能力,binlog日志只能用于归档.而InnoDB是另一个公司以插件形式引入MySQL的,既然只依靠binlog<br>
+是没有crash-safe能力的,所以InnoDB使用redo log来实现crash-safe的能力.</p>
+<h2 id="redo-log和bin-log的不同点">redo log和bin log的不同点</h2>
+<p>1.redo log是InnoDB引擎特有的;bin log是MySQL的Server层实现的,所有引擎可以使用.<br>
+2.redo log是物理日志,记录的是&quot;在某个数据页上做了什么修改&quot;;binlog是逻辑日志,记录的是这个语句的原始逻辑.比如&quot;给ID=2这一行的c字段加1&quot;.<br>
+3.redo log是循环写的,空间固定会用完;binlog是可以追加写入的.&quot;追加写&quot;是指binlog文件写到一定大小后会切换到下一个.并不会覆盖一起的日志.</p>
+<h2 id="innodb引擎执行更新语句时的内部流程">InnoDB引擎执行更新语句时的内部流程</h2>
+<p>1.执行器先找到引擎取ID=2这一行.ID是主键,引擎直接用树搜索找到这一行.如果ID=2这一行所在的数据页本来就在内存中,就直接返回给执行器;否则,需要先从磁盘读入内存后再返回.<br>
+2.执行器拿到引擎给的行数据,把这个值加上1,比如原来是N,现在是N+1,得到新的一行数据,再调用引擎接口写入这行新数据.<br>
+3.引擎将这行数据更新到内存中,同时将这个更新操作记录到redo log里面,此时redo log处于prepare(预提交)状态.然后告知执行器执行完成了,随时可以提交事务.<br>
+4.执行器生成这个操作的binlog,并把binlog写入磁盘.<br>
+5.执行器调用引擎的提交事务交接口,引擎把刚刚写入的redo log改成提交(commit)状态,更新完成.将 redo log 的写入拆成了两个步骤：prepare和commit,这就是&quot;两阶段提交&quot;</p>
+<h2 id="两阶段提交">两阶段提交</h2>
+<p>为了让两份日志之间的逻辑一致.</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#mysql-sql%E8%AF%AD%E5%8F%A5%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B">MySQL SQL语句执行流程</a></li>
+<li><a href="#redo-log">redo log</a></li>
+<li><a href="#bin-log">bin log</a></li>
+<li><a href="#redo-log%E5%92%8Cbin-log%E7%9A%84%E4%B8%8D%E5%90%8C%E7%82%B9">redo log和bin log的不同点</a></li>
+<li><a href="#innodb%E5%BC%95%E6%93%8E%E6%89%A7%E8%A1%8C%E6%9B%B4%E6%96%B0%E8%AF%AD%E5%8F%A5%E6%97%B6%E7%9A%84%E5%86%85%E9%83%A8%E6%B5%81%E7%A8%8B">InnoDB引擎执行更新语句时的内部流程</a></li>
+<li><a href="#%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4">两阶段提交</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://codingheping.github.io/post/mysql-you-hua/">
+              <h3 class="post-title">
+                Mysql优化
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://codingheping.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

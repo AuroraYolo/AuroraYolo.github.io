@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://codingheping.github.io</id>
     <title>codingheping</title>
-    <updated>2020-11-10T09:01:31.688Z</updated>
+    <updated>2020-11-10T09:09:10.709Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://codingheping.github.io"/>
     <link rel="self" href="https://codingheping.github.io/atom.xml"/>
@@ -10,6 +10,161 @@
     <logo>https://codingheping.github.io/images/avatar.png</logo>
     <icon>https://codingheping.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, codingheping</rights>
+    <entry>
+        <title type="html"><![CDATA[Mysql查询执行流程]]></title>
+        <id>https://codingheping.github.io/post/mysql-cha-xun-zhi-xing-liu-cheng/</id>
+        <link href="https://codingheping.github.io/post/mysql-cha-xun-zhi-xing-liu-cheng/">
+        </link>
+        <updated>2020-11-10T09:07:29.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="mysql-sql语句执行流程">MySQL SQL语句执行流程</h2>
+<figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604999295879.png" alt="" loading="lazy"></figure>
+<p>大体来说,MySQL可以分为Server层和存储引擎层两部分.<br>
+Server层包括连接器、查询缓存、分析器、优化器、执行器等,涵盖MySQL的大多数核心服务功能,以及<br>
+所有的内置函数(如日期,时间,数学和加密函数),所有跨存储引擎的功能都在这一层实现,比如存储过程<br>
+触发器、视图等.</p>
+<p>存储引擎只负责数据的存储和提取.其架构模式是插件式的,支持InnoDB、MyiSAM、Memory<br>
+等多个存储引擎,现在最常用的存储引擎是InnoDB.从MySQL5.5.5版本开始成为了默认引擎.</p>
+<h3 id="连接器">连接器.</h3>
+<p>第一步,先连接到数据库服务器上,这时候接待你的就是连接器.连接器负责跟客户端建立连接、获取权限、维持和管理连接.<br>
+连接命令: mysql -h<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi><mi>p</mi><mo>−</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">ip -p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">i</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">p</span></span></span></span>port -u$user -p</p>
+<h3 id="查询缓存">查询缓存</h3>
+<p>连接建立完成后,就可以执行select语句了.执行逻辑来到第二步:查询缓存.</p>
+<p>MySQL拿到一个查询请求后,会先到查询缓存查看,如果命中查询缓存就以key-value的形式返回.<br>
+如果没有命中缓存,就进入下一个执行阶段.<br>
+不建议开启缓存,MySQL8.0废弃了查询缓存.</p>
+<h3 id="分析器">分析器</h3>
+<p>没有命中查询缓存,开始执行语句,MySQL对SQL语句做解析.查看SQL语句是否满足MySQL语法,<br>
+如果不满足就抛出错误.</p>
+<h3 id="优化器">优化器</h3>
+<p>经过了分析器,还要经过优化器.优化器是在表里有多个索引时,决定使用哪个索引;或者在一个语句中有多表<br>
+关联(join),决定各个表的连接顺序.</p>
+<h3 id="执行器">执行器</h3>
+<p>开始执行的时候,判断一下对这个表有没有执行查询的权限,如果没有,就会返回没有权限的错误,如果有权限,就打开表<br>
+继续执行。打开表的时候,执行器就会根据表的引擎定义,去使用(InnoDB,MyiSAM)引擎提供的接口.然后返回执行的结果.</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Mysql更新执行流程]]></title>
+        <id>https://codingheping.github.io/post/mysql-geng-xin-zhi-xing-liu-cheng/</id>
+        <link href="https://codingheping.github.io/post/mysql-geng-xin-zhi-xing-liu-cheng/">
+        </link>
+        <updated>2020-11-10T09:04:49.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="mysql-sql语句执行流程">MySQL SQL语句执行流程</h2>
+<figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604999136696.png" alt="" loading="lazy"></figure>
+<p>与MySQL查询流程一样,更新流程还涉及两个重要的日志模块,redo log(重做日志)和binlog(归档日志).</p>
+<h2 id="redo-log">redo log</h2>
+<p>如果每一次的的更新操作都需要写进磁盘,然后磁盘也要找到对应的那条记录,然后再更新,整个IO成本、查找成本很高.MySQL里使用的是<br>
+WAL技术,WAL的全称是Write-Ahead Logging.它的关键点是先写日志,再写磁盘.具体来说,当有一条记录需要更新的时候,InnoDB引擎就会先把记录写到redo log里面,<br>
+并更新内存.这个时候更新就算完成了.同时,InnoDB引擎会在适当的时候,将这个操作记录更新到磁盘里面,而这个更新往往是在系统比较空闲的时候做.</p>
+<p>InnoDB的redo log是固定大小的,比如可以配置为一组4个文件,每个文件的大小是1GB,那么总共可以记录4GB的操作.从头开始写,写到末尾就又回到开头循环写.如图所示:<br>
+<img src="https://codingheping.github.io/post-images/1604999149606.png" alt="" loading="lazy"><br>
+write pos是当前记录的位置,一边写一边往后移,写到第3号文件末尾后就回到0号文件开头.checkpoint是当前要擦除的位置,也是往后移并且循环的,擦除记录<br>
+前要把记录更新到数据文件.<br>
+有了redo log,InnoDB就可以保证即使数据库发送异常重启,之前提交的记录都不会丢失,这个能力成为crash-safe.</p>
+<h2 id="bin-log">bin log</h2>
+<p>redo log是InnoDB引擎特有的日志,而Server层也有自己的日志,称为binlog(归档日志).为什么有两份日志?因为最开始MySQL里并没有InnoDB引擎.<br>
+MySQL自带的引擎是MyISAM,但是MyISAM没有crash-safe的能力,binlog日志只能用于归档.而InnoDB是另一个公司以插件形式引入MySQL的,既然只依靠binlog<br>
+是没有crash-safe能力的,所以InnoDB使用redo log来实现crash-safe的能力.</p>
+<h2 id="redo-log和bin-log的不同点">redo log和bin log的不同点</h2>
+<p>1.redo log是InnoDB引擎特有的;bin log是MySQL的Server层实现的,所有引擎可以使用.<br>
+2.redo log是物理日志,记录的是&quot;在某个数据页上做了什么修改&quot;;binlog是逻辑日志,记录的是这个语句的原始逻辑.比如&quot;给ID=2这一行的c字段加1&quot;.<br>
+3.redo log是循环写的,空间固定会用完;binlog是可以追加写入的.&quot;追加写&quot;是指binlog文件写到一定大小后会切换到下一个.并不会覆盖一起的日志.</p>
+<h2 id="innodb引擎执行更新语句时的内部流程">InnoDB引擎执行更新语句时的内部流程</h2>
+<p>1.执行器先找到引擎取ID=2这一行.ID是主键,引擎直接用树搜索找到这一行.如果ID=2这一行所在的数据页本来就在内存中,就直接返回给执行器;否则,需要先从磁盘读入内存后再返回.<br>
+2.执行器拿到引擎给的行数据,把这个值加上1,比如原来是N,现在是N+1,得到新的一行数据,再调用引擎接口写入这行新数据.<br>
+3.引擎将这行数据更新到内存中,同时将这个更新操作记录到redo log里面,此时redo log处于prepare(预提交)状态.然后告知执行器执行完成了,随时可以提交事务.<br>
+4.执行器生成这个操作的binlog,并把binlog写入磁盘.<br>
+5.执行器调用引擎的提交事务交接口,引擎把刚刚写入的redo log改成提交(commit)状态,更新完成.将 redo log 的写入拆成了两个步骤：prepare和commit,这就是&quot;两阶段提交&quot;</p>
+<h2 id="两阶段提交">两阶段提交</h2>
+<p>为了让两份日志之间的逻辑一致.</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Mysql优化]]></title>
+        <id>https://codingheping.github.io/post/mysql-you-hua/</id>
+        <link href="https://codingheping.github.io/post/mysql-you-hua/">
+        </link>
+        <updated>2020-11-10T09:03:26.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="常见误区">常见误区</h2>
+<pre><code>1.通常来说把可为NULL的列改为NOT NULL不会对性能提升有多少帮助,只是如果计划在列上创建索引,就应该将该列设置为NOT NULL。
+2.对整数类型指定宽度,比如INT(11)，没有任何卵用。INT使用32位（4个字节）存储空间，那么它的表示范围已经确定，所以INT(1)和INT(20)对于存储和计算是相同的。
+3.UNSIGNED表示不允许负值，大致可以使正数的上限提高一倍。比如TINYINT存储范围是-128 ~ 127，而UNSIGNED TINYINT存储的范围却是0 - 255。
+  
+4.通常来讲，没有太大的必要使用DECIMAL数据类型。即使是在需要存储财务数据时，仍然可以使用BIGINT。比如需要精确到万分之一，那么可以将数据乘以一百万然后使用BIGINT存储。这样可以避免浮点数计算不准确和DECIMAL精确计算代价高的问题。
+  
+5.TIMESTAMP使用4个字节存储空间，DATETIME使用8个字节存储空间。因而，TIMESTAMP只能表示1970 - 2038年，比DATETIME表示的范围小得多，而且TIMESTAMP的值因时区不同而不同。
+  
+ 6.大多数情况下没有使用枚举类型的必要，其中一个缺点是枚举的字符串列表是固定的，添加和删除字符串（枚举选项）必须使用ALTER TABLE（如果只只是在列表末尾追加元素，不需要重建表）。
+  
+ 7.schema的列不要太多。原因是存储引擎的API工作时需要在服务器层和存储引擎层之间通过行缓冲格式拷贝数据，然后在服务器层将缓冲内容解码成各个列，这个转换过程的代价是非常高的。如果列太多而实际使用的列又很少的话，有可能会导致CPU占用过高。
+  
+ 8.大表ALTER TABLE非常耗时，MySQL执行大部分修改表结果操作的方法是用新的结构创建一个张空表，从旧表中查出所有的数据插入新表，然后再删除旧表。尤其当内存不足而表又很大，而且还有很大索引的情况下，耗时更久。当然有一些奇技淫巧可以解决这个问题，有兴趣可自行查阅。
+</code></pre>
+<h2 id="总结建议">总结建议</h2>
+<pre><code>1.数据库设计和表创建时要考虑性能.
+2.sql的编写需要注意优化
+3.分区
+4.分表
+5.分库
+</code></pre>
+<h2 id="数据库设计和表创建就要考虑性能">数据库设计和表创建就要考虑性能</h2>
+<pre><code>1.表字段避免null出现,null值很难查询优化且占用额外的索引空间,推荐默认使用0代替null
+2.尽量使用INT而非BIGINT,如果非负加上UNSIGNED,当然能使用TINYINT,SMALLINT,MEDIUM_INT更好.
+3.使用枚举或整数代替字符串类型
+4.尽量使用TIMESTAMP而非DATETIME
+5.单表不要有太多字段
+6.VARCHAR的长度只分配真正需要的空间
+</code></pre>
+<h2 id="索引">索引</h2>
+<pre><code>1.根据查询有针对性的创建,考虑在WHERE和ORDER BY命令上涉及的列建立索引,可根据EXPLAIN来查看是否用了索引还是全表扫描.
+2.应尽量避免在WHERE子句中对字段进行NULL值判断,否则导致引擎放弃使用索引而进行全表扫描.
+3.值分布很稀少的字段不适合建索引,例如&quot;性别&quot;这种只有两三个值的字段.原因:非聚簇索引存储了对主键的引用，如果 select 字段不在非聚簇索引内，就需要跳到主键索引。
+- 如果非聚簇索引值重复率高，那么查询时就会大量出现上图中从右边跳到左边的情况，导致整个流程很慢
+数据库中聚集索引只有一个，默认主键。其他用户创建的索引都是非聚集索引。
+非聚集索引存储了对主键的引用，即通过索引确定叶子节点之后，还需要再次根据主键去查询数据。（所以会查询两次）
+如果非聚集索引重复率高（即一个同样的值有多个主键），那么首先你会从索引中取一半主键值，然后根据主键值再去查询数据，增加了IO，所以特别耗时。
+4.字符字段只建前缀索引.
+5.字符字段最好不要做主键.
+6.不用外键,由程序保证约束.
+7.尽量不要用UNIQUE,由程序保证约束.
+</code></pre>
+<h2 id="sql编写优化">sql编写优化.</h2>
+<pre><code>1.使用limit对查询结果的记录进行限定.
+2.避免select(*),将需要查找的字段列出来.
+3.使用连接(join)来代替子查询
+4.拆分大的delete或insert语句
+5.可通过开启慢查询日志找出慢的SQL
+6.OR改写成IN;OR的效率时N级别,IN的效率时log(n)级别,in的个数建议控制在200以内
+7.避免使用%xxx查询.
+8.使用同类型比较.123和123比
+9.尽量避免在WHERE子句中使用!=或&lt;&gt;操作符,否则引擎放弃索引使用全表扫描
+10.不做列运算：SELECT id WHERE age + 1 = 10，任何对列的操作都将导致表扫描，它包括数据库教程函数、计算表达式等等，查询时要尽可能将操作移至等号右边；
+11.对于联系数值,使用BETWEEN不要IN.SELECT id FROM t WHERE num BETWEEN 1 AND 5
+12.列表数据不要拿全表，要使用LIMIT来分页，每页数量也不要太大
+13.sql语句尽可能简单：一条sql只能在一个cpu运算；大语句拆小语句，减少锁时间；一条大sql可以堵死整个库；
+</code></pre>
+<h2 id="引擎">引擎</h2>
+<pre><code>MyISAM
+MyISAM引擎是MySQL 5.1及之前版本的默认引擎，它的特点是：
+1.不支持行锁，读取时对需要读到的所有表加锁，写入时则对表加排它锁
+2.不支持事务
+3.不支持外键
+4.不支持崩溃后的安全恢复
+5.在表有读取查询的同时，支持往表中插入新纪录
+6.支持BLOB和TEXT的前500个字符索引，支持全文索引
+7.支持延迟更新索引，极大提升写入性能
+8.对于不会进行修改的表，支持压缩表，极大减少磁盘空间占用
+</code></pre>
+<pre><code> InnoDB
+ InnoDB在MySQL 5.5后成为默认索引，它的特点是：
+ 1.支持行锁，采用MVCC来支持高并发
+ 2.支持事务
+ 3.支持外键
+ 4.支持崩溃后的安全恢复
+ 5.不支持全文索引总体来讲，MyISAM适合SELECT密集型的表，而InnoDB适合INSERT和UPDATE密集型的表
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[JOIN]]></title>
         <id>https://codingheping.github.io/post/join/</id>

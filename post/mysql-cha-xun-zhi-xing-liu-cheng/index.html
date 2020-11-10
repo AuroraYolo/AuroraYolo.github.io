@@ -1,0 +1,218 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mysql查询执行流程 | codingheping</title>
+<link rel="shortcut icon" href="https://codingheping.github.io/favicon.ico?v=1604999341479">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://codingheping.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Mysql查询执行流程 | codingheping - Atom Feed" href="https://codingheping.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="MySQL SQL语句执行流程
+
+大体来说,MySQL可以分为Server层和存储引擎层两部分.
+Server层包括连接器、查询缓存、分析器、优化器、执行器等,涵盖MySQL的大多数核心服务功能,以及
+所有的内置函数(如日期,时间,数学和加..." />
+    <meta name="keywords" content="Mysql" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://codingheping.github.io">
+  <img class="avatar" src="https://codingheping.github.io/images/avatar.png?v=1604999341479" alt="">
+  </a>
+  <h1 class="site-title">
+    codingheping
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/codingheping" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Mysql查询执行流程
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-11-10
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://codingheping.github.io/tag/KeeNu9X4Q/" class="post-tag">
+                  # Mysql
+                </a>
+              
+            </div>
+            
+              <img class="post-feature-image" src="https://codingheping.github.io/post-images/mysql-cha-xun-zhi-xing-liu-cheng.jpg" alt="">
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="mysql-sql语句执行流程">MySQL SQL语句执行流程</h2>
+<figure data-type="image" tabindex="1"><img src="https://codingheping.github.io/post-images/1604999295879.png" alt="" loading="lazy"></figure>
+<p>大体来说,MySQL可以分为Server层和存储引擎层两部分.<br>
+Server层包括连接器、查询缓存、分析器、优化器、执行器等,涵盖MySQL的大多数核心服务功能,以及<br>
+所有的内置函数(如日期,时间,数学和加密函数),所有跨存储引擎的功能都在这一层实现,比如存储过程<br>
+触发器、视图等.</p>
+<p>存储引擎只负责数据的存储和提取.其架构模式是插件式的,支持InnoDB、MyiSAM、Memory<br>
+等多个存储引擎,现在最常用的存储引擎是InnoDB.从MySQL5.5.5版本开始成为了默认引擎.</p>
+<h3 id="连接器">连接器.</h3>
+<p>第一步,先连接到数据库服务器上,这时候接待你的就是连接器.连接器负责跟客户端建立连接、获取权限、维持和管理连接.<br>
+连接命令: mysql -h<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi><mi>p</mi><mo>−</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">ip -p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">i</span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">p</span></span></span></span>port -u$user -p</p>
+<h3 id="查询缓存">查询缓存</h3>
+<p>连接建立完成后,就可以执行select语句了.执行逻辑来到第二步:查询缓存.</p>
+<p>MySQL拿到一个查询请求后,会先到查询缓存查看,如果命中查询缓存就以key-value的形式返回.<br>
+如果没有命中缓存,就进入下一个执行阶段.<br>
+不建议开启缓存,MySQL8.0废弃了查询缓存.</p>
+<h3 id="分析器">分析器</h3>
+<p>没有命中查询缓存,开始执行语句,MySQL对SQL语句做解析.查看SQL语句是否满足MySQL语法,<br>
+如果不满足就抛出错误.</p>
+<h3 id="优化器">优化器</h3>
+<p>经过了分析器,还要经过优化器.优化器是在表里有多个索引时,决定使用哪个索引;或者在一个语句中有多表<br>
+关联(join),决定各个表的连接顺序.</p>
+<h3 id="执行器">执行器</h3>
+<p>开始执行的时候,判断一下对这个表有没有执行查询的权限,如果没有,就会返回没有权限的错误,如果有权限,就打开表<br>
+继续执行。打开表的时候,执行器就会根据表的引擎定义,去使用(InnoDB,MyiSAM)引擎提供的接口.然后返回执行的结果.</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#mysql-sql%E8%AF%AD%E5%8F%A5%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B">MySQL SQL语句执行流程</a>
+<ul>
+<li><a href="#%E8%BF%9E%E6%8E%A5%E5%99%A8">连接器.</a></li>
+<li><a href="#%E6%9F%A5%E8%AF%A2%E7%BC%93%E5%AD%98">查询缓存</a></li>
+<li><a href="#%E5%88%86%E6%9E%90%E5%99%A8">分析器</a></li>
+<li><a href="#%E4%BC%98%E5%8C%96%E5%99%A8">优化器</a></li>
+<li><a href="#%E6%89%A7%E8%A1%8C%E5%99%A8">执行器</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://codingheping.github.io/post/mysql-geng-xin-zhi-xing-liu-cheng/">
+              <h3 class="post-title">
+                Mysql更新执行流程
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://codingheping.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
